@@ -1,12 +1,8 @@
 package mux
 
 import (
-	"github.com/freekieb7/mud/mux/middleware"
-	"log"
 	"net/http"
 	"regexp"
-	"slices"
-	"strings"
 )
 
 var (
@@ -14,46 +10,22 @@ var (
 )
 
 type route struct {
-	method      string
-	path        string
-	handler     http.Handler
-	middlewares []middleware.Middleware
-	params      []string
+	method  string
+	path    string
+	handler http.Handler
 }
 
 type Route interface {
 	Method() string
 	Path() string
 	Handler() http.Handler
-	Middlewares() []middleware.Middleware
 }
 
-func NewRoute(method string, path string, handler http.Handler, middlewares ...middleware.Middleware) Route {
-	// STEP 1: Cleanup path
-	path = strings.Replace(path, "//", "/", -1)
-
-	// STEP 2: Validate path
-	pathSlice := strings.Split(path, "/")
-
-	var uniqueEntries []string
-	for _, pathEntry := range pathSlice {
-		if false == DynamicArgumentRegex.MatchString(pathEntry) {
-			continue
-		}
-
-		if slices.Contains(uniqueEntries, pathEntry) {
-			log.Fatalf("route: duplicate path param found `%s`", pathEntry)
-		}
-
-		uniqueEntries = append(uniqueEntries, pathEntry)
-	}
-
-	// STEP 3: Return route
+func NewRoute(method string, path string, handler http.Handler) Route {
 	return &route{
-		method:      method,
-		path:        path,
-		middlewares: middlewares,
-		handler:     handler,
+		method:  method,
+		path:    path,
+		handler: handler,
 	}
 }
 
@@ -67,8 +39,4 @@ func (route *route) Path() string {
 
 func (route *route) Handler() http.Handler {
 	return route.handler
-}
-
-func (route *route) Middlewares() []middleware.Middleware {
-	return route.middlewares
 }
