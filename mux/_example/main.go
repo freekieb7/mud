@@ -16,5 +16,5 @@ func main() {
 }
 
 func PathCheckHandler(response http.ResponseWriter, request *http.Request) {
-	response.Write([]byte("Path: " + request.URL.Path))
+	_, _ = response.Write([]byte("Path: " + request.URL.Path))
 }
