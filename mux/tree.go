@@ -59,14 +59,16 @@ func (node *RouteNode) insert(route Route, pathPieces []string) {
 
 func (tree *RouteTree) Search(request *http.Request) Route {
 	pathPieces := strings.Split(request.URL.Path, "/")
-	return tree.root.search(pathPieces)
+	return tree.root.search(pathPieces, request.Method)
 }
 
-func (node *RouteNode) search(pathPieces []string) Route {
+func (node *RouteNode) search(pathPieces []string, method string) Route {
 	// Match made in heaven
 	if len(pathPieces) == 1 {
-		if node.regex == pathPieces[0] {
-			return node.routes[0] // TODO
+		for _, nodeRoute := range node.routes {
+			if method == nodeRoute.Method() {
+				return nodeRoute
+			}
 		}
 
 		return NewNotFoundRoute()
@@ -76,24 +78,26 @@ func (node *RouteNode) search(pathPieces []string) Route {
 	for regex, subRoute := range node.subRoutes {
 		// Static match
 		if regex == pathPieces[1] {
-			return subRoute.search(pathPieces[1:])
+			return subRoute.search(pathPieces[1:], method)
 		}
 
 		// Dynamic match
 		if DynamicArgumentRegex.MatchString(regex) {
 			regexParts := strings.Split(regex[1:len(regex)-1], ":")
 
+			// Regex check
 			if len(regexParts) == 2 {
 				if regexp.MustCompile(regexParts[1]).MatchString(pathPieces[1]) {
-					return subRoute.search(pathPieces[1:])
+					return subRoute.search(pathPieces[1:], method)
 				}
 
-				return NewRoute(http.MethodGet, "", http.NotFoundHandler())
+				continue
 			}
 
-			return subRoute.search(pathPieces[1:])
+			// Only dynamic
+			return subRoute.search(pathPieces[1:], method)
 		}
 	}
 
-	return NewRoute(http.MethodGet, "", http.NotFoundHandler())
+	return NewNotFoundRoute()
 }

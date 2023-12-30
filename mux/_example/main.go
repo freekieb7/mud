@@ -10,6 +10,7 @@ func main() {
 	router := mux.NewRouter()
 
 	router.Get("/test/{id:[0-9]+}/asd", PathCheckHandler)
+	router.Get("/test/{id:[0-9]+}/{bla}", PathCheckHandler)
 
 	log.Fatal(http.ListenAndServe(":3000", router))
 }
