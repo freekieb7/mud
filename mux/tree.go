@@ -3,6 +3,7 @@ package mux
 import (
 	"log"
 	"net/http"
+	"regexp"
 	"strings"
 )
 
@@ -64,16 +65,34 @@ func (tree *RouteTree) Search(request *http.Request) Route {
 func (node *RouteNode) search(pathPieces []string) Route {
 	// Match made in heaven
 	if len(pathPieces) == 1 {
-		if node.regex != pathPieces[0] {
-			return NewNotFoundRoute()
+		if node.regex == pathPieces[0] {
+			return node.routes[0] // TODO
 		}
 
-		return node.routes[0]
+		return NewNotFoundRoute()
 	}
 
 	// We go the subroute route
-	if subRoute, ok := node.subRoutes[pathPieces[1]]; ok {
-		return subRoute.search(pathPieces[1:])
+	for regex, subRoute := range node.subRoutes {
+		// Static match
+		if regex == pathPieces[1] {
+			return subRoute.search(pathPieces[1:])
+		}
+
+		// Dynamic match
+		if DynamicArgumentRegex.MatchString(regex) {
+			regexParts := strings.Split(regex[1:len(regex)-1], ":")
+
+			if len(regexParts) == 2 {
+				if regexp.MustCompile(regexParts[1]).MatchString(pathPieces[1]) {
+					return subRoute.search(pathPieces[1:])
+				}
+
+				return NewRoute(http.MethodGet, "", http.NotFoundHandler())
+			}
+
+			return subRoute.search(pathPieces[1:])
+		}
 	}
 
 	return NewRoute(http.MethodGet, "", http.NotFoundHandler())
