@@ -18,10 +18,10 @@ type Router interface {
 func NewRouter() Router {
 	return &router{
 		tree: RouteTree{
-			root: &RouteNode{
+			root: RouteNode{
 				regex:     "",
-				routes:    make([]Route, 0),
-				subRoutes: make([]RouteNode, 0),
+				routes:    []Route{},
+				subRoutes: map[string]*RouteNode{},
 			},
 		},
 	}

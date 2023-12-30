@@ -7,24 +7,24 @@ import (
 )
 
 type RouteTree struct {
-	root *RouteNode
+	root RouteNode
 }
 
 type RouteNode struct {
 	regex     string
 	routes    []Route
-	subRoutes []RouteNode
+	subRoutes map[string]*RouteNode
 }
 
 func (tree *RouteTree) Insert(route Route) {
 	pathPieces := strings.Split(route.Path(), "/")
-
 	tree.root.insert(route, pathPieces)
 }
 
 func (node *RouteNode) insert(route Route, pathPieces []string) {
+	// Bad
 	if node.regex != pathPieces[0] {
-		log.Fatal("something is not right")
+		log.Fatal("tree insertion: no path pieces left to assert")
 	}
 
 	// Match made in heaven
@@ -33,20 +33,27 @@ func (node *RouteNode) insert(route Route, pathPieces []string) {
 		return
 	}
 
-	// Maybe subroute
-	for index := range node.subRoutes {
-		if node.subRoutes[index].regex == pathPieces[1] {
-			node.subRoutes[index].insert(route, pathPieces[1:])
-		}
+	// Maybe subroute matches
+	if subRoute, ok := node.subRoutes[pathPieces[1]]; ok {
+		subRoute.insert(route, pathPieces[1:])
+		return
 	}
 
-	// No subroute available so create new
-	node.subRoutes = append(node.subRoutes, RouteNode{
+	// No subroute matches, so create new matching subroute
+	node.subRoutes[pathPieces[1]] = &RouteNode{
 		regex:     pathPieces[1],
-		routes:    make([]Route, 0),
-		subRoutes: make([]RouteNode, 0),
-	})
-	node.subRoutes[len(node.subRoutes)-1].insert(route, pathPieces[1:])
+		routes:    []Route{},
+		subRoutes: map[string]*RouteNode{},
+	}
+
+	// Continue insert with subroute
+	if subRoute, ok := node.subRoutes[pathPieces[1]]; ok {
+		subRoute.insert(route, pathPieces[1:])
+		return
+	}
+
+	// Whut
+	log.Fatal("tree insertion: failed subroute assertion after creation")
 }
 
 func (tree *RouteTree) Search(request *http.Request) Route {
@@ -55,25 +62,18 @@ func (tree *RouteTree) Search(request *http.Request) Route {
 }
 
 func (node *RouteNode) search(pathPieces []string) Route {
-	if len(pathPieces) == 0 {
-		return NewRoute(http.MethodGet, "", http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-			http.Error(writer, "500 internal server error", http.StatusInternalServerError)
-		}))
-	}
-
-	if node.regex != pathPieces[0] {
-		return NewRoute(http.MethodGet, "", http.NotFoundHandler())
-	}
-
 	// Match made in heaven
 	if len(pathPieces) == 1 {
+		if node.regex != pathPieces[0] {
+			return NewNotFoundRoute()
+		}
+
 		return node.routes[0]
 	}
 
-	for index := range node.subRoutes {
-		if node.subRoutes[index].regex == pathPieces[1] {
-			return node.subRoutes[index].search(pathPieces[1:])
-		}
+	// We go the subroute route
+	if subRoute, ok := node.subRoutes[pathPieces[1]]; ok {
+		return subRoute.search(pathPieces[1:])
 	}
 
 	return NewRoute(http.MethodGet, "", http.NotFoundHandler())
