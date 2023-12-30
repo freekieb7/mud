@@ -71,7 +71,7 @@ func (node *RouteNode) search(pathPieces []string, method string) Route {
 			}
 		}
 
-		return NewNotFoundRoute()
+		return NewMethodNotAllowedRoute()
 	}
 
 	// We go the subroute route

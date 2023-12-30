@@ -1,6 +1,7 @@
 package mux
 
 import (
+	"github.com/freekieb7/mud/mux/middleware"
 	"net/http"
 	"regexp"
 )
@@ -10,22 +11,25 @@ var (
 )
 
 type route struct {
-	method  string
-	path    string
-	handler http.Handler
+	method      string
+	path        string
+	handler     http.Handler
+	middlewares []middleware.Middleware
 }
 
 type Route interface {
 	Method() string
 	Path() string
 	Handler() http.Handler
+	Middlewares() []middleware.Middleware
 }
 
-func NewRoute(method string, path string, handler http.Handler) Route {
+func NewRoute(method string, path string, handler http.Handler, middlewares []middleware.Middleware) Route {
 	return &route{
-		method:  method,
-		path:    path,
-		handler: handler,
+		method:      method,
+		path:        path,
+		handler:     handler,
+		middlewares: middlewares,
 	}
 }
 
@@ -39,4 +43,8 @@ func (route *route) Path() string {
 
 func (route *route) Handler() http.Handler {
 	return route.handler
+}
+
+func (route *route) Middlewares() []middleware.Middleware {
+	return route.middlewares
 }
