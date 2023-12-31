@@ -37,9 +37,8 @@ func NewRouter() Router {
 }
 
 func (router *router) Add(method string, path string, fn HandleFunc, middlewares []middleware.Middleware) {
-	if path[0] != '/' {
-		path = "/" + path
-	}
+	// Add potentially missing backslash
+	path = polishPath(path)
 
 	newRoute := NewRoute(method, path, http.HandlerFunc(fn), middlewares)
 	router.tree.Insert(newRoute)
@@ -111,11 +110,7 @@ func (router *router) ServeHTTP(response http.ResponseWriter, request *http.Requ
 
 func (router *router) merge(groupPath string, subRouter Router) {
 	for _, newRoute := range subRouter.Routes() {
-		routePath := newRoute.Path()
-
-		if routePath[0] != '/' {
-			routePath = "/" + routePath
-		}
+		routePath := polishPath(newRoute.Path())
 
 		router.Add(
 			newRoute.Method(),
@@ -124,4 +119,12 @@ func (router *router) merge(groupPath string, subRouter Router) {
 			append(subRouter.Middlewares(), newRoute.Middlewares()...),
 		)
 	}
+}
+
+func polishPath(path string) string {
+	if path[0] != '/' {
+		return "/" + path
+	}
+
+	return path
 }
