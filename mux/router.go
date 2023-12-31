@@ -15,9 +15,17 @@ type router struct {
 type Router interface {
 	Get(path string, handleFunc HandleFunc, middlewares ...middleware.Middleware)
 	Post(path string, handleFunc HandleFunc, middlewares ...middleware.Middleware)
+	Put(path string, handleFunc HandleFunc, middlewares ...middleware.Middleware)
+	Patch(path string, handleFunc HandleFunc, middlewares ...middleware.Middleware)
+	Delete(path string, handleFunc HandleFunc, middlewares ...middleware.Middleware)
+	Head(path string, handleFunc HandleFunc, middlewares ...middleware.Middleware)
+	Options(path string, handleFunc HandleFunc, middlewares ...middleware.Middleware)
+
 	Group(path string, fn func(router Router))
 	Use(middleware middleware.Middleware)
+
 	ServeHTTP(response http.ResponseWriter, request *http.Request)
+
 	Routes() []Route
 	Middlewares() []middleware.Middleware
 }
@@ -28,7 +36,7 @@ func NewRouter() Router {
 	}
 }
 
-func (router *router) add(method string, path string, fn HandleFunc, middlewares []middleware.Middleware) {
+func (router *router) Add(method string, path string, fn HandleFunc, middlewares []middleware.Middleware) {
 	if path[0] != '/' {
 		path = "/" + path
 	}
@@ -38,11 +46,31 @@ func (router *router) add(method string, path string, fn HandleFunc, middlewares
 }
 
 func (router *router) Get(path string, fn HandleFunc, middlewares ...middleware.Middleware) {
-	router.add(http.MethodGet, path, fn, middlewares)
+	router.Add(http.MethodGet, path, fn, middlewares)
 }
 
 func (router *router) Post(path string, fn HandleFunc, middlewares ...middleware.Middleware) {
-	router.add(http.MethodPost, path, fn, middlewares)
+	router.Add(http.MethodPost, path, fn, middlewares)
+}
+
+func (router *router) Put(path string, fn HandleFunc, middlewares ...middleware.Middleware) {
+	router.Add(http.MethodPut, path, fn, middlewares)
+}
+
+func (router *router) Patch(path string, fn HandleFunc, middlewares ...middleware.Middleware) {
+	router.Add(http.MethodPatch, path, fn, middlewares)
+}
+
+func (router *router) Delete(path string, fn HandleFunc, middlewares ...middleware.Middleware) {
+	router.Add(http.MethodDelete, path, fn, middlewares)
+}
+
+func (router *router) Head(path string, fn HandleFunc, middlewares ...middleware.Middleware) {
+	router.Add(http.MethodHead, path, fn, middlewares)
+}
+
+func (router *router) Options(path string, fn HandleFunc, middlewares ...middleware.Middleware) {
+	router.Add(http.MethodOptions, path, fn, middlewares)
 }
 
 func (router *router) Group(path string, fn func(router Router)) {
@@ -89,7 +117,7 @@ func (router *router) merge(groupPath string, subRouter Router) {
 			routePath = "/" + routePath
 		}
 
-		router.add(
+		router.Add(
 			newRoute.Method(),
 			groupPath+routePath,
 			newRoute.Handler().ServeHTTP,
