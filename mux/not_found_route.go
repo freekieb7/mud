@@ -8,7 +8,7 @@ import (
 func NewNotFoundRoute() Route {
 	return NewRoute(
 		"ANY",
-		"/",
+		"",
 		http.NotFoundHandler(),
 		make([]middleware.Middleware, 0),
 	)
