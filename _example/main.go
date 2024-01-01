@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/freekieb7/mud/mux"
-	"github.com/freekieb7/mud/mux/middleware"
+	"github.com/freekieb7/mux"
+	"github.com/freekieb7/mux/middleware"
 	"log"
 	"net/http"
 )

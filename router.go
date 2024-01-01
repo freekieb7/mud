@@ -2,7 +2,7 @@ package mux
 
 import (
 	"context"
-	"github.com/freekieb7/mud/mux/middleware"
+	"github.com/freekieb7/mux/middleware"
 	"net/http"
 )
 
