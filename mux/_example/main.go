@@ -15,6 +15,7 @@ func main() {
 
 		router.Get("/a", PathCheckHandler)
 		router.Get("b", PathCheckHandler)
+		router.Get("{c}", DynamicHandler)
 	})
 
 	//router.Get("/a", PathCheckHandler)
@@ -30,4 +31,9 @@ func main() {
 
 func PathCheckHandler(response http.ResponseWriter, request *http.Request) {
 	_, _ = response.Write([]byte("Path: " + request.URL.Path))
+}
+
+func DynamicHandler(response http.ResponseWriter, request *http.Request) {
+	_, _ = response.Write([]byte("Path param: " + mux.PathParam(request, "c") + "\n"))
+	_, _ = response.Write([]byte("Query param: " + mux.QueryParam(request, "test")))
 }
