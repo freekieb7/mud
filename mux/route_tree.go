@@ -95,16 +95,16 @@ func (node *routeNode) insert(route Route, pathPieces []string) {
 func (node *routeNode) search(pathPieces []string, method string) Route {
 	// Match made in heaven
 	if len(pathPieces) == 1 {
-		// No routes available
-		if len(node.routes) == 0 {
-			return NewNotFoundRoute()
-		}
-
 		// Check routes and methods
 		for _, nodeRoute := range node.routes {
 			if method == nodeRoute.Method() {
 				return nodeRoute
 			}
+		}
+
+		// No routes available
+		if len(node.routes) == 0 {
+			return NewNotFoundRoute()
 		}
 
 		return NewMethodNotAllowedRoute()
