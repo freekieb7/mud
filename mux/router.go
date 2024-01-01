@@ -1,6 +1,7 @@
 package mux
 
 import (
+	"context"
 	"github.com/freekieb7/mud/mux/middleware"
 	"net/http"
 )
@@ -94,6 +95,8 @@ func (router *router) Middlewares() []middleware.Middleware {
 func (router *router) ServeHTTP(response http.ResponseWriter, request *http.Request) {
 	matchingRoute := router.tree.Search(request)
 	handler := matchingRoute.Handler()
+
+	request = request.WithContext(context.WithValue(request.Context(), RouteCtxKey, matchingRoute))
 
 	// Route specific middleware
 	for _, routeMiddleware := range matchingRoute.Middlewares() {
